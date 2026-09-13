@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, HttpException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseFilters } from '@nestjs/common';
 import { UsersService } from './users.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
+import { HttpExceptionFilter } from '../exception/http-exception.filter.js';
 
 @Controller('users')
 export class UsersController {
@@ -18,6 +19,7 @@ export class UsersController {
   }
 
   @Get(':id')
+  @UseFilters(new HttpExceptionFilter())
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(+id);
   }

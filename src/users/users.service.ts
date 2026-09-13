@@ -23,7 +23,13 @@ export class UsersService {
 
   findOne(id: number) {
     if (isNaN(+id)) {
-      throw new HttpException('BAD_REQUEST,id is not null', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        {
+          code: 'USER_ID_INVALID',
+          message: '用户 ID 必须是有效数字',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
     }
     return this.usersRepository.findOneBy({ id });
   }
