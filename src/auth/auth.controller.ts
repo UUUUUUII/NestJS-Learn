@@ -1,6 +1,7 @@
-import { Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseFilters } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { Public } from './public.decorator.js';
+import { HttpExceptionFilter } from '../exception/http-exception.filter.js';
 
 @Controller()
 export class AuthController {
@@ -9,8 +10,9 @@ export class AuthController {
 
   // 登录接口是公开接口，不需要先通过认证守卫。
   @Public()
+  @UseFilters(new HttpExceptionFilter())
   @Post('login')
-  login() {
-    return "登录成功";
+  login(@Body() body: { name: string; pw: string }) {
+    return this.authService.login(body?.name, body?.pw);
   }
 }

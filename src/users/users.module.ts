@@ -11,6 +11,7 @@ import { User } from './entities/user.entity.js';
   controllers: [UsersController],
   // 注册用户业务服务。
   providers: [UsersService],
+  exports: [UsersService],
 })
 // 用户模块聚合用户相关的控制器、服务和数据库实体。
 export class UsersModule {}

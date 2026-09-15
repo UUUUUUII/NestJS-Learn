@@ -27,7 +27,7 @@ export class UsersService {
 
   // 根据用户 ID 查询单个用户。
   findOne(id: number) {
-    if (isNaN(+id)) {
+    if (Number.isNaN(Number(id))) {
       // 通过异常对象传递业务错误编码和提示信息。
       throw new HttpException(
         {
@@ -42,7 +42,7 @@ export class UsersService {
 
   // 根据用户 ID 更新用户信息。
   update(id: number, updateUserDto: UpdateUserDto) {
-    if (isNaN(+id)) {
+    if (Number.isNaN(Number(id))) {
       // ID 不是有效数字时终止数据库操作。
       throw new HttpException('BAD_REQUEST,id is not null', HttpStatus.BAD_REQUEST);
     }
@@ -51,10 +51,14 @@ export class UsersService {
 
   // 根据用户 ID 删除用户。
   remove(id: number) {
-    if (isNaN(+id)) {
+    if (Number.isNaN(Number(id))) {
       // ID 不是有效数字时终止数据库操作。
       throw new HttpException('BAD_REQUEST,id is not null', HttpStatus.BAD_REQUEST);
     }
     return this.usersRepository.delete(id);
+  }
+
+  findByName(name: string): Promise<User | null> {
+    return this.usersRepository.findOneBy({ name });
   }
 }
