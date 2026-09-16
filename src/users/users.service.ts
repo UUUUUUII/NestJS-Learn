@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import * as argon2 from 'argon2';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,15 +9,24 @@ import { User } from './entities/user.entity.js';
 @Injectable()
 export class UsersService {
   // 注入 User Repository，用于执行数据库操作。
-  constructor(@InjectRepository(User) private readonly usersRepository: Repository<User>) {}
+  constructor(
+    @InjectRepository(User) private readonly usersRepository: Repository<User>,
+  ) {}
 
   // 创建 User 实体并保存到数据库。
-  create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    const { name, pw, role, active } = createUserDto || {};
+    if (!name || !pw) {
+      throw new HttpException(
+        'Name and password are required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     const user = new User();
-    user.name = createUserDto.name;
-    user.pw = createUserDto.pw;
-    user.role = createUserDto.role;
-    user.active = createUserDto.active;
+    user.name = name;
+    user.pw = await argon2.hash(pw);
+    user.role = role || 'user';
+    user.active = active || 1;
     return this.usersRepository.save(user);
   }
 
@@ -44,7 +54,10 @@ export class UsersService {
   update(id: number, updateUserDto: UpdateUserDto) {
     if (Number.isNaN(Number(id))) {
       // ID 不是有效数字时终止数据库操作。
-      throw new HttpException('BAD_REQUEST,id is not null', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'BAD_REQUEST,id is not null',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     return this.usersRepository.update(id, updateUserDto);
   }
@@ -53,7 +66,10 @@ export class UsersService {
   remove(id: number) {
     if (Number.isNaN(Number(id))) {
       // ID 不是有效数字时终止数据库操作。
-      throw new HttpException('BAD_REQUEST,id is not null', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'BAD_REQUEST,id is not null',
+        HttpStatus.BAD_REQUEST,
+      );
     }
     return this.usersRepository.delete(id);
   }

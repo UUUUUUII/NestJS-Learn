@@ -22,5 +22,5 @@ export class User {
 
   // 用户是否处于启用状态。
   @Column()
-  active: boolean;
+  active: number;
 }
