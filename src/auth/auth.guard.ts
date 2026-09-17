@@ -1,4 +1,11 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { IS_PUBLIC_KEY } from './public.decorator.js';
@@ -24,21 +31,27 @@ export class AuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<{
       headers: Record<string, string | string[] | undefined>;
+      cookies?: Record<string, string | undefined>;
       user?: unknown;
     }>();
     const authHeader = request.headers.authorization;
+    const cookieToken = request.cookies?.access_token;
 
-    if (!authHeader || typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid authorization token');
+    if (
+      !cookieToken &&
+      (typeof authHeader !== 'string' || !authHeader.startsWith('Bearer '))
+    ) {
+      throw new HttpException('请登录', HttpStatus.UNAUTHORIZED);
     }
 
     try {
-      const token = authHeader.replace('Bearer ', '').trim();
+      const token =
+        cookieToken ?? (authHeader as string).replace('Bearer ', '').trim();
       const payload = await this.jwtService.verifyAsync(token);
       request.user = payload;
       return true;
     } catch {
-      throw new UnauthorizedException('Invalid token');
+      throw new HttpException('请登录', HttpStatus.UNAUTHORIZED);
     }
   }
 }
