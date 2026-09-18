@@ -2,16 +2,13 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import type { User } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
-  // 注入 User Repository，用于执行数据库操作。
-  constructor(
-    @InjectRepository(User) private readonly usersRepository: Repository<User>,
-  ) {}
+  // 注入 Prisma 客户端，用于执行数据库操作。
+  constructor(private readonly prisma: PrismaService) {}
 
   // 创建 User 实体并保存到数据库。
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -22,17 +19,19 @@ export class UsersService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    const user = new User();
-    user.name = name;
-    user.pw = await argon2.hash(pw);
-    user.role = role || 'user';
-    user.active = active || 1;
-    return this.usersRepository.save(user);
+    return this.prisma.user.create({
+      data: {
+        name,
+        pw: await argon2.hash(pw),
+        role: role || 'user',
+        active: active ?? 1,
+      },
+    });
   }
 
   // 查询全部用户。
   findAll() {
-    return this.usersRepository.find();
+    return this.prisma.user.findMany();
   }
 
   // 根据用户 ID 查询单个用户。
@@ -47,7 +46,7 @@ export class UsersService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    return this.usersRepository.findOneBy({ id });
+    return this.prisma.user.findUnique({ where: { id } });
   }
 
   // 根据用户 ID 更新用户信息。
@@ -59,7 +58,7 @@ export class UsersService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    return this.usersRepository.update(id, updateUserDto);
+    return this.prisma.user.update({ where: { id }, data: updateUserDto });
   }
 
   // 根据用户 ID 删除用户。
@@ -71,10 +70,10 @@ export class UsersService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    return this.usersRepository.delete(id);
+    return this.prisma.user.delete({ where: { id } });
   }
 
   findByName(name: string): Promise<User | null> {
-    return this.usersRepository.findOneBy({ name });
+    return this.prisma.user.findUnique({ where: { name } });
   }
 }
